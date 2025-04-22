@@ -5,11 +5,12 @@ import sys
 import pandas as pd
 import numpy as np
 import argparse
+import json
 
 def parse_route_file(route_file_path):
     """
     Парсинг файла с маршрутом.
-    Возвращает список городов в маршруте и общую длину пути.
+    Возвращает список городов в маршруте, общую длину пути и время выполнения.
     """
     try:
         with open(route_file_path, 'r') as f:
@@ -18,19 +19,24 @@ def parse_route_file(route_file_path):
         # Должно быть не менее 3 строк (заголовок, маршрут, пустая строка, длина)
         if len(lines) < 3:
             print(f"Ошибка: Файл маршрута {route_file_path} имеет неверный формат.")
-            return None, None
+            return None, None, None
         
         # Извлекаем маршрут
         route_line = lines[1].strip()
         route = re.findall(r'City_(\d+)', route_line)
         route = [int(city) for city in route]
         
-        # Ищем строку с длиной пути
+        # Ищем строку с длиной пути и временем выполнения
         distance_line = None
+        execution_time = None
+        
         for line in lines:
             if "Total Path Length" in line or "Total path length" in line:
                 distance_line = line.strip()
-                break
+            elif "Execution Time" in line:
+                execution_time_line = line.strip()
+                # Извлекаем время выполнения, учитывая, что может быть "seconds" в конце
+                execution_time = float(execution_time_line.split(':')[-1].strip().split(' ')[0])
         
         # Извлекаем длину пути
         if distance_line:
@@ -39,11 +45,24 @@ def parse_route_file(route_file_path):
             print("Ошибка: Не найдена информация о длине пути.")
             total_distance = None
         
-        return route, total_distance
+        # Проверяем наличие JSON-файла с результатами
+        json_path = route_file_path.replace('.txt', '.json')
+        json_data = None
+        if os.path.exists(json_path):
+            try:
+                with open(json_path, 'r') as jf:
+                    json_data = json.load(jf)
+                # Если в JSON есть информация о времени выполнения, используем её
+                if json_data and 'execution_time' in json_data:
+                    execution_time = json_data['execution_time']
+            except:
+                print(f"Предупреждение: Не удалось загрузить JSON-данные из {json_path}")
+        
+        return route, total_distance, execution_time
     
     except Exception as e:
         print(f"Ошибка при парсинге файла маршрута: {e}")
-        return None, None
+        return None, None, None
 
 def load_distance_matrix(matrix_file_path):
     """
@@ -147,10 +166,11 @@ def main():
     parser = argparse.ArgumentParser(description="Проверка решения задачи коммивояжера")
     parser.add_argument("--route", type=str, required=True, help="Путь к файлу с маршрутом (best_route.txt)")
     parser.add_argument("--matrix", type=str, required=True, help="Путь к файлу с матрицей расстояний (distances.csv)")
+    parser.add_argument("--json", action="store_true", help="Сохранить результаты проверки в JSON-формате")
     args = parser.parse_args()
     
     # Загрузка данных
-    route, reported_distance = parse_route_file(args.route)
+    route, reported_distance, execution_time = parse_route_file(args.route)
     distance_matrix = load_distance_matrix(args.matrix)
     
     if route is None or distance_matrix is None:
@@ -183,6 +203,10 @@ def main():
                 print("\n✓ Длина маршрута рассчитана верно.")
             else:
                 print("\n⚠ Есть расхождение в расчете длины маршрута.")
+        
+        # Вывод информации о времени выполнения
+        if execution_time is not None:
+            print(f"\nВремя выполнения: {execution_time:.6f} секунд")
     else:
         print("\n✗ Маршрут невалиден. Обнаружены следующие проблемы:")
         for error in results["errors"]:
@@ -192,6 +216,32 @@ def main():
         print("\nПредупреждения:")
         for warning in results["warnings"]:
             print(f"  - {warning}")
+    
+    # Сохранение результатов в JSON-файл
+    if args.json:
+        output_json = {
+            "route_validity": {
+                "valid": results["valid"],
+                "errors": results["errors"],
+                "warnings": results["warnings"]
+            },
+            "route_data": {
+                "route": [f"City_{city}" for city in route],
+                "reported_distance": reported_distance,
+                "calculated_distance": results["calculated_distance"],
+                "execution_time": execution_time
+            },
+            "comparison": {
+                "distance_difference": abs(reported_distance - results["calculated_distance"]) if reported_distance else None,
+                "distance_difference_percent": (abs(reported_distance - results["calculated_distance"]) / reported_distance * 100) if reported_distance and reported_distance != 0 else None
+            }
+        }
+        
+        # Сохраняем результаты в JSON-файл
+        output_path = os.path.join(os.path.dirname(args.route), "verification_results.json")
+        with open(output_path, "w") as jf:
+            json.dump(output_json, jf, indent=2)
+        print(f"\nРезультаты проверки сохранены в {output_path}")
 
 if __name__ == "__main__":
     main() 

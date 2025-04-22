@@ -1,6 +1,8 @@
 import numpy as np
 import os
 import pandas as pd
+import json
+import time
 from itertools import combinations
 
 def load_input_values(input_values_path):
@@ -189,14 +191,36 @@ def main():
             file.write(f"Ошибка: слишком много городов ({num_cities}). Максимально допустимое количество: {MAX_CITIES}.\n")
         return
     
+    # Засекаем время начала выполнения
+    start_time = time.time()
+    
     # Решаем задачу
     path, total_distance = held_karp(distance_matrix)
     
-    # Сохраняем результат
+    # Вычисляем время выполнения
+    execution_time = time.time() - start_time
+    
+    # Формируем результаты для сохранения
+    route_str = " -> ".join([f"City_{i}" for i in path])
+    
+    # Сохраняем результат в текстовый файл
     with open(os.path.join(args.save_path, "best_route.txt"), "w") as file:
         file.write("Best Route:\n")
-        file.write(" -> ".join([f"City_{i}" for i in path]) + "\n")
+        file.write(route_str + "\n")
         file.write(f"\nTotal Path Length: {total_distance}\n")
+        file.write(f"Execution Time: {execution_time:.6f} seconds\n")
+    
+    # Сохраняем результат в JSON
+    result_json = {
+        "algorithm": "Held-Karp (Dynamic Programming)",
+        "route": [f"City_{i}" for i in path],
+        "total_distance": total_distance,
+        "execution_time": execution_time,
+        "num_cities": num_cities
+    }
+    
+    with open(os.path.join(args.save_path, "best_route.json"), "w") as json_file:
+        json.dump(result_json, json_file, indent=2)
 
 if __name__ == "__main__":
     main() 

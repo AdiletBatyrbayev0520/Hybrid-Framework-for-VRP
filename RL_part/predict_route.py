@@ -2,6 +2,8 @@ import numpy as np
 import argparse
 import os
 import pandas as pd
+import json
+import time
 
 # Функция для чтения весов из файлов
 def load_weights(weights_path):
@@ -103,16 +105,34 @@ def find_route(num_cities, Q1, Q2, distance_matrix):
     return best_path
 
 # Функция для сохранения маршрута в файл
-def save_route(best_path, save_path, distance_matrix):
+def save_route(best_path, save_path, distance_matrix, execution_time):
     # Calculate total path length
     total_distance = 0
     for i in range(len(best_path) - 1):
         total_distance += distance_matrix[best_path[i]][best_path[i+1]]
     
+    # Сохраняем в текстовый файл
+    route_str = " -> ".join([f"City_{i}" for i in best_path])
+    
     with open(os.path.join(save_path, "predicted_route.txt"), "w") as file:
         file.write("Best Route:\n")
-        file.write(" -> ".join([f"City_{i}" for i in best_path]) + "\n")
+        file.write(route_str + "\n")
         file.write(f"\nTotal Path Length: {total_distance}\n")
+        file.write(f"Execution Time: {execution_time:.6f} seconds\n")
+    
+    # Сохраняем в JSON
+    result_json = {
+        "algorithm": "Double Q-learning (Reinforcement Learning)",
+        "route": [f"City_{i}" for i in best_path],
+        "total_distance": total_distance,
+        "execution_time": execution_time,
+        "num_cities": len(distance_matrix)
+    }
+    
+    with open(os.path.join(save_path, "predicted_route.json"), "w") as json_file:
+        json.dump(result_json, json_file, indent=2)
+    
+    return total_distance
 
 def main():
     # Парсим аргументы командной строки
@@ -137,11 +157,17 @@ def main():
         num_cities, edges = load_input_values(args.input_path)
         distance_matrix = create_distance_matrix(num_cities, edges)
 
+    # Засекаем время начала выполнения
+    start_time = time.time()
+    
     # Нахождение маршрута
     best_path = find_route(num_cities, Q1, Q2, distance_matrix)
+    
+    # Вычисляем время выполнения
+    execution_time = time.time() - start_time
 
     # Сохранение маршрута в файл
-    save_route(best_path, args.save_path, distance_matrix)
+    save_route(best_path, args.save_path, distance_matrix, execution_time)
 
 if __name__ == "__main__":
     main()

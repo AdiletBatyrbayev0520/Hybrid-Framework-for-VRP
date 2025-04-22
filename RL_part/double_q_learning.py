@@ -3,6 +3,8 @@ import pandas as pd
 import argparse
 import os
 import logging
+import json
+import time
 
 # Настройка логирования
 def setup_logging(save_path):
@@ -52,6 +54,9 @@ def choose_action(state, Q1, Q2, epsilon, num_cities, visited):
 
 # Функция для выполнения Double Q-learning
 def run_double_q_learning(num_cities, distance_matrix, num_episodes, alpha, gamma, epsilon, save_path, Q1=None, Q2=None):
+    # Засекаем время начала обучения
+    start_time = time.time()
+    
     if Q1 is None or Q2 is None:
         Q1 = np.zeros((num_cities, num_cities))  # Q-таблица для первого набора
         Q2 = np.zeros((num_cities, num_cities))  # Q-таблица для второго набора
@@ -115,14 +120,41 @@ def run_double_q_learning(num_cities, distance_matrix, num_episodes, alpha, gamm
     for i in range(len(best_path) - 1):
         total_distance += distance_matrix[best_path[i]][best_path[i+1]]
     
+    # Вычисляем общее время выполнения
+    execution_time = time.time() - start_time
+    
     logging.info(f"Best Path: {best_path}")
     logging.info(f"Total Path Length: {total_distance}")
+    logging.info(f"Execution Time: {execution_time:.6f} seconds")
 
+    # Формируем результаты для сохранения
+    route_str = " -> ".join([f"City_{i}" for i in best_path])
+    
     # Save the best route to a file
     with open(os.path.join(save_path, "best_route.txt"), "w") as file:
         file.write("Best Route:\n")
-        file.write(" -> ".join([f"City_{i}" for i in best_path]) + "\n")
+        file.write(route_str + "\n")
         file.write(f"\nTotal Path Length: {total_distance}\n")
+        file.write(f"Execution Time: {execution_time:.6f} seconds\n")
+        file.write(f"Training Episodes: {num_episodes}\n")
+
+    # Сохраняем результаты в JSON
+    result_json = {
+        "algorithm": "Double Q-learning Training",
+        "route": [f"City_{i}" for i in best_path],
+        "total_distance": total_distance,
+        "execution_time": execution_time,
+        "num_cities": num_cities,
+        "parameters": {
+            "episodes": num_episodes,
+            "alpha": alpha,
+            "gamma": gamma,
+            "epsilon": epsilon
+        }
+    }
+    
+    with open(os.path.join(save_path, "best_route.json"), "w") as json_file:
+        json.dump(result_json, json_file, indent=2)
 
     # Save the Q-table weights to a file
     np.savetxt(os.path.join(save_path, "q1_weights.txt"), Q1, fmt="%.4f")
