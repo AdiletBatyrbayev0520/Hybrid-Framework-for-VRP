@@ -160,8 +160,8 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(description="Solve TSP using Held-Karp algorithm")
-    parser.add_argument('input_path', type=str, help="Path to folder with cities.csv and distances.csv OR to input values file")
-    parser.add_argument('save_path', type=str, help="Path to save the best route")
+    parser.add_argument('--input_path', type=str, help="Path to folder with cities.csv and distances.csv OR to input values file")
+    parser.add_argument('--save_path', type=str, help="Path to save the best route")
     parser.add_argument('--csv', action='store_true', help="Use CSV files instead of input values file")
     args = parser.parse_args()
     

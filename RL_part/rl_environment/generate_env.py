@@ -16,8 +16,8 @@ def calculate_distance(city1, city2):
 def main():
     # Парсим аргументы командной строки
     parser = argparse.ArgumentParser(description="Generate TSP Cities and Distances")
-    parser.add_argument('num_cities', type=int, help="Number of cities")
-    parser.add_argument('save_path', type=str, help="Path to save CSV files")
+    parser.add_argument('--num_cities', type=int, help="Number of cities")
+    parser.add_argument('--save_path', type=str, help="Path to save CSV files")
     args = parser.parse_args()
 
     num_cities = args.num_cities

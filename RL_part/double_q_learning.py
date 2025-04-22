@@ -10,6 +10,13 @@ def setup_logging(save_path):
                         level=logging.INFO, format="%(asctime)s - %(message)s")
     logging.info("Starting Double Q-learning Algorithm")
 
+# Функция для загрузки весов из файлов
+def load_weights(weights_path):
+    Q1 = np.loadtxt(os.path.join(weights_path, "q1_weights.txt"))
+    Q2 = np.loadtxt(os.path.join(weights_path, "q2_weights.txt"))
+    logging.info("Loaded existing weights from files")
+    return Q1, Q2
+
 # Функция для выбора действия с ε-жадной стратегией
 def choose_action(state, Q1, Q2, epsilon, num_cities, visited):
     if np.random.rand() < epsilon:
@@ -44,9 +51,13 @@ def choose_action(state, Q1, Q2, epsilon, num_cities, visited):
     return action
 
 # Функция для выполнения Double Q-learning
-def run_double_q_learning(num_cities, distance_matrix, num_episodes, alpha, gamma, epsilon, save_path):
-    Q1 = np.zeros((num_cities, num_cities))  # Q-таблица для первого набора
-    Q2 = np.zeros((num_cities, num_cities))  # Q-таблица для второго набора
+def run_double_q_learning(num_cities, distance_matrix, num_episodes, alpha, gamma, epsilon, save_path, Q1=None, Q2=None):
+    if Q1 is None or Q2 is None:
+        Q1 = np.zeros((num_cities, num_cities))  # Q-таблица для первого набора
+        Q2 = np.zeros((num_cities, num_cities))  # Q-таблица для второго набора
+        logging.info("Initialized new Q-tables")
+    else:
+        logging.info("Using existing Q-tables for continued learning")
 
     # Логирование
     logging.info(f"Parameters: Episodes = {num_episodes}, Alpha = {alpha}, Gamma = {gamma}, Epsilon = {epsilon}")
@@ -121,16 +132,20 @@ def run_double_q_learning(num_cities, distance_matrix, num_episodes, alpha, gamm
 # Main function
 def main():
     parser = argparse.ArgumentParser(description="Run Double Q-learning on TSP")
-    parser.add_argument('save_path', type=str, help="Path to save logs, weights, and routes")
-    parser.add_argument('num_episodes', type=int, default=1000, help="Number of episodes (default is 1000)")
-    parser.add_argument('alpha', type=float, default=0.1, help="Learning rate (default is 0.1)")
-    parser.add_argument('gamma', type=float, default=0.9, help="Discount factor (default is 0.9)")
+    parser.add_argument('--save_path', type=str, required=True, help="Path to save logs, weights, and routes")
+    parser.add_argument('--weights_path', type=str, help="Path to existing weights (optional)")
+    parser.add_argument('--num_episodes', type=int, default=1000, help="Number of episodes (default is 1000)")
+    parser.add_argument('--alpha', type=float, default=0.1, help="Learning rate (default is 0.1)")
+    parser.add_argument('--gamma', type=float, default=0.9, help="Discount factor (default is 0.9)")
+    parser.add_argument('--epsilon', type=float, default=0.1, help="Exploration rate (default is 0.1)")
     args = parser.parse_args()
 
     save_path = args.save_path
+    weights_path = args.weights_path
     num_episodes = args.num_episodes
     alpha = args.alpha
     gamma = args.gamma
+    epsilon = args.epsilon
 
     # Load cities and distance data
     cities_df = pd.read_csv(os.path.join(save_path, "cities.csv"), index_col=0)
@@ -142,8 +157,13 @@ def main():
     # Set up logging
     setup_logging(save_path)
 
+    # Load existing weights if provided
+    Q1, Q2 = None, None
+    if weights_path and os.path.exists(os.path.join(weights_path, "q1_weights.txt")) and os.path.exists(os.path.join(weights_path, "q2_weights.txt")):
+        Q1, Q2 = load_weights(weights_path)
+
     # Run Double Q-learning
-    run_double_q_learning(num_cities, distance_matrix, num_episodes, alpha, gamma, epsilon=0.1, save_path=save_path)
+    run_double_q_learning(num_cities, distance_matrix, num_episodes, alpha, gamma, epsilon, save_path, Q1, Q2)
 
 if __name__ == "__main__":
     main()
