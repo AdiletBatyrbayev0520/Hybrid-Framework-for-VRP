@@ -1,4 +1,4 @@
 Best Route:
-City_0 -> City_9 -> City_19 -> City_2 -> City_14 -> City_3 -> City_7 -> City_20 -> City_11 -> City_10 -> City_5 -> City_16 -> City_17 -> City_6 -> City_13 -> City_15 -> City_12 -> City_8 -> City_1 -> City_18 -> City_4 -> City_0
+City_0 -> City_17 -> City_20 -> City_14 -> City_7 -> City_3 -> City_2 -> City_9 -> City_19 -> City_13 -> City_6 -> City_16 -> City_8 -> City_12 -> City_5 -> City_11 -> City_10 -> City_15 -> City_1 -> City_18 -> City_4 -> City_0
 
-Total Path Length: 1246.929259340691
+Total Path Length: 1014.6570095168955
