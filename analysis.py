@@ -11,12 +11,12 @@ def parse_route_file(file_path):
         with open(file_path, 'r') as f:
             lines = f.readlines()
         
-        # Извлечение маршрута
+        
         route_line = lines[1].strip()
         route = re.findall(r'City_(\d+)', route_line)
         route = [int(city) for city in route]
         
-        # Извлечение длины пути
+        
         distance_line = None
         execution_time = None
         
@@ -33,7 +33,7 @@ def parse_route_file(file_path):
             print(f"Предупреждение: Не найдена информация о длине пути в файле {file_path}")
             total_distance = None
         
-        # Попытка загрузить данные из JSON, если он существует
+        
         json_path = file_path.replace('.txt', '.json')
         json_data = None
         if os.path.exists(json_path):
@@ -61,11 +61,11 @@ def load_cities(folder_path):
 
 def analyze_routes(dp_route, dp_distance, dp_time, rl_route, rl_distance, rl_time):
     """Анализ различий между маршрутами"""
-    # Разница в длине пути
+    
     distance_diff = rl_distance - dp_distance
     distance_diff_percent = (distance_diff / dp_distance) * 100
     
-    # Разница во времени выполнения
+    
     if dp_time and rl_time:
         time_diff = rl_time - dp_time
         time_ratio = rl_time / dp_time if dp_time > 0 else float('inf')
@@ -73,10 +73,10 @@ def analyze_routes(dp_route, dp_distance, dp_time, rl_route, rl_distance, rl_tim
         time_diff = None
         time_ratio = None
     
-    # Анализ порядка городов
+    
     common_subsequences = find_common_subsequences(dp_route, rl_route)
     
-    # Вывод результатов анализа
+    
     print("АНАЛИЗ МАРШРУТОВ")
     print("-" * 50)
     print(f"Маршрут DP (Хелд-Карп): {' -> '.join(['City_' + str(city) for city in dp_route])}")
@@ -96,7 +96,7 @@ def analyze_routes(dp_route, dp_distance, dp_time, rl_route, rl_distance, rl_tim
     
     print("Общие подпоследовательности городов:")
     for seq in common_subsequences:
-        if len(seq) > 2:  # Показываем только подпоследовательности длиннее 2
+        if len(seq) > 2:  
             print(f"  {' -> '.join(['City_' + str(city) for city in seq])}")
     
     return {
@@ -116,38 +116,38 @@ def find_common_subsequences(route1, route2):
     subsequences = []
     current_seq = []
     
-    # Создаем словарь позиций для второго маршрута
+    
     positions = {city: i for i, city in enumerate(route2)}
     
     for i in range(len(route1) - 1):
         current_city = route1[i]
         next_city = route1[i + 1]
         
-        # Если текущий город в текущей последовательности, добавляем следующий
+        
         if not current_seq or current_city == current_seq[-1]:
             current_seq.append(current_city)
             
-            # Проверяем, является ли переход (current_city -> next_city) частью маршрута RL
+            
             if current_city in positions and next_city in positions:
                 pos_current = positions[current_city]
                 pos_next = positions[next_city]
                 
-                # Проверяем, следуют ли города последовательно в маршруте RL
-                # Учитываем циклическую природу маршрута
+                
+                
                 if (pos_next == (pos_current + 1) % len(route2)):
                     current_seq.append(next_city)
                 else:
-                    # Завершаем текущую последовательность
+                    
                     if len(current_seq) > 1:
                         subsequences.append(current_seq)
                     current_seq = []
         else:
-            # Завершаем текущую последовательность
+            
             if len(current_seq) > 1:
                 subsequences.append(current_seq)
             current_seq = [current_city]
     
-    # Добавляем последнюю последовательность, если она не пуста
+    
     if current_seq and len(current_seq) > 1:
         subsequences.append(current_seq)
     
@@ -161,33 +161,33 @@ def visualize_routes(cities_df, dp_route, rl_route, save_path=None):
     
     plt.figure(figsize=(12, 10))
     
-    # Извлечение координат
+    
     x = cities_df['X'].values
     y = cities_df['Y'].values
     
-    # Создание координат для маршрутов
+    
     dp_x = [x[city] for city in dp_route]
     dp_y = [y[city] for city in dp_route]
     rl_x = [x[city] for city in rl_route]
     rl_y = [y[city] for city in rl_route]
     
-    # Добавление замыкающего города для DP (если маршрут не замкнут)
+    
     if dp_route[0] != dp_route[-1]:
         dp_x.append(x[dp_route[0]])
         dp_y.append(y[dp_route[0]])
     
-    # Построение маршрутов
+    
     plt.plot(dp_x, dp_y, 'b-', alpha=0.7, linewidth=2, label='DP (Хелд-Карп)')
     plt.plot(rl_x, rl_y, 'r-', alpha=0.7, linewidth=2, label='RL (Q-learning)')
     
-    # Отметка городов
+    
     plt.scatter(x, y, c='black', s=50, zorder=5)
     
-    # Пометка городов
+    
     for i, (xi, yi) in enumerate(zip(x, y)):
         plt.annotate(f'City_{i}', (xi, yi), xytext=(5, 5), textcoords='offset points')
     
-    # Выделение начального города
+    
     plt.scatter(x[0], y[0], c='green', s=100, zorder=6, label='Начальный город (City_0)')
     
     plt.title('Сравнение маршрутов алгоритмов Хелд-Карпа и Q-learning')
@@ -196,7 +196,7 @@ def visualize_routes(cities_df, dp_route, rl_route, save_path=None):
     plt.legend()
     plt.grid(True, alpha=0.3)
     
-    # Сохранение или отображение
+    
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         print(f"Визуализация сохранена в {save_path}")
@@ -205,50 +205,50 @@ def visualize_routes(cities_df, dp_route, rl_route, save_path=None):
 
 def create_comparison_charts(analysis_results, save_path=None):
     """Создание сравнительных диаграмм"""
-    # Создаем фигуру с двумя подграфиками
+    
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
     
-    # Данные для диаграмм
+    
     labels = ['DP (Хелд-Карп)', 'RL (Q-learning)']
     distances = [analysis_results["dp_distance"], analysis_results["rl_distance"]]
     times = [analysis_results["dp_time"], analysis_results["rl_time"]]
     colors = ['blue', 'red']
     
-    # 1. Диаграмма сравнения длин маршрутов
+    
     bars1 = ax1.bar(labels, distances, color=colors, alpha=0.7)
     ax1.set_title('Сравнение длин маршрутов')
     ax1.set_ylabel('Общая длина маршрута')
     ax1.grid(True, axis='y', alpha=0.3)
     
-    # Добавление значений над столбцами
+    
     for bar in bars1:
         height = bar.get_height()
         ax1.text(bar.get_x() + bar.get_width()/2., height + 5,
                 f'{height:.2f}', ha='center', va='bottom')
     
-    # Процентная разница для маршрутов
+    
     diff_percent = analysis_results["distance_difference_percent"]
     ax1.figtext(0.25, 0.01, f'Разница: {diff_percent:.2f}%', ha='center', fontsize=12)
     
-    # 2. Диаграмма сравнения времени выполнения
+    
     if times[0] and times[1]:
         bars2 = ax2.bar(labels, times, color=colors, alpha=0.7)
         ax2.set_title('Сравнение времени выполнения')
         ax2.set_ylabel('Время (секунды)')
         ax2.grid(True, axis='y', alpha=0.3)
         
-        # Логарифмическая шкала, если времена сильно различаются
+        
         if max(times) / min(times) > 100:
             ax2.set_yscale('log')
             ax2.set_ylabel('Время (секунды, лог. шкала)')
         
-        # Добавление значений над столбцами
+        
         for bar in bars2:
             height = bar.get_height()
             ax2.text(bar.get_x() + bar.get_width()/2., height * 1.05,
                     f'{height:.4f}', ha='center', va='bottom')
         
-        # Кратность разницы во времени
+        
         time_ratio = analysis_results["time_ratio"]
         faster_text = "быстрее" if time_ratio < 1 else "медленнее"
         ax2.figtext(0.75, 0.01, f'RL в {abs(time_ratio):.2f}x {faster_text}', ha='center', fontsize=12)
@@ -258,7 +258,7 @@ def create_comparison_charts(analysis_results, save_path=None):
     
     plt.tight_layout()
     
-    # Сохранение или отображение
+    
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         print(f"Диаграммы сохранены в {save_path}")
@@ -266,37 +266,37 @@ def create_comparison_charts(analysis_results, save_path=None):
         plt.show()
 
 def main():
-    # Пути к файлам
+    
     dp_route_file = "DP_part/tests/1/best_route.txt"
     rl_route_file = "RL_part/tests/1/predicted_route.txt"
-    cities_folder = "RL_part/tests/1"  # Папка, содержащая cities.csv
+    cities_folder = "RL_part/tests/1"  
     
-    # Парсинг файлов с маршрутами
+    
     dp_route, dp_distance, dp_time, dp_json = parse_route_file(dp_route_file)
     rl_route, rl_distance, rl_time, rl_json = parse_route_file(rl_route_file)
     
-    # Проверка успешности парсинга
+    
     if not all([dp_route, dp_distance, rl_route, rl_distance]):
         print("Ошибка: Не удалось корректно загрузить данные маршрутов.")
         return
     
-    # Загрузка координат городов
+    
     cities_df = load_cities(cities_folder)
     
-    # Анализ маршрутов
+    
     analysis_results = analyze_routes(dp_route, dp_distance, dp_time, rl_route, rl_distance, rl_time)
     
-    # Создание директории для результатов
+    
     os.makedirs("analysis_results", exist_ok=True)
     
-    # Визуализация маршрутов
+    
     if cities_df is not None:
         visualize_routes(cities_df, dp_route, rl_route, save_path="analysis_results/route_comparison.png")
     
-    # Создание сравнительных диаграмм
+    
     create_comparison_charts(analysis_results, save_path="analysis_results/performance_comparison.png")
     
-    # Сохранение результатов анализа в текстовый файл
+    
     with open("analysis_results/analysis_summary.txt", "w") as f:
         f.write("СРАВНИТЕЛЬНЫЙ АНАЛИЗ АЛГОРИТМОВ TSP\n")
         f.write("=" * 50 + "\n\n")
@@ -328,7 +328,7 @@ def main():
             f.write("Не найдено значимых общих подпоследовательностей.\n")
         else:
             for i, seq in enumerate(analysis_results['common_subsequences'], 1):
-                if len(seq) > 2:  # Показываем только подпоследовательности длиннее 2
+                if len(seq) > 2:  
                     f.write(f"Подпоследовательность {i}: {' -> '.join(['City_' + str(city) for city in seq])}\n")
         
         f.write(f"\n{'5' if dp_time and rl_time else '4'}. ВЫВОДЫ\n")
@@ -348,7 +348,7 @@ def main():
         f.write("- Преимуществом RL-подхода является возможность работы с большим количеством городов.\n")
         f.write("- Качество решения RL-алгоритма можно улучшить, увеличив количество эпизодов обучения.\n")
     
-    # Сохранение результатов анализа в JSON
+    
     json_results = {
         "dp": {
             "route": [f"City_{city}" for city in dp_route],

@@ -13,14 +13,14 @@ def is_port_in_use(port):
 def start_servers():
     print("Запуск API-серверов для задачи коммивояжера...")
     
-    # Проверяем, не запущены ли уже серверы
+    
     if is_port_in_use(8000):
         print("Порт 8000 уже занят. Возможно, DP API уже запущен.")
     
     if is_port_in_use(8001):
         print("Порт 8001 уже занят. Возможно, RL API уже запущен.")
     
-    # Запускаем DP API сервер
+    
     print("\nЗапуск DP API сервера (Held-Karp)...")
     dp_process = subprocess.Popen(
         ["python", "-m", "uvicorn", "dp_api:app", "--host", "0.0.0.0", "--port", "8000"],
@@ -30,7 +30,7 @@ def start_servers():
         text=True
     )
     
-    # Даем серверу время на запуск
+    
     time.sleep(1)
     if dp_process.poll() is not None:
         print("Ошибка запуска DP API сервера:")
@@ -38,7 +38,7 @@ def start_servers():
     else:
         print("DP API сервер запущен на http://localhost:8000")
     
-    # Запускаем RL API сервер
+    
     print("\nЗапуск RL API сервера (Q-learning)...")
     rl_process = subprocess.Popen(
         ["python", "-m", "uvicorn", "rl_api:app", "--host", "0.0.0.0", "--port", "8001"],
@@ -48,7 +48,7 @@ def start_servers():
         text=True
     )
     
-    # Даем серверу время на запуск
+    
     time.sleep(1)
     if rl_process.poll() is not None:
         print("Ошибка запуска RL API сервера:")
@@ -61,7 +61,7 @@ def start_servers():
     print("RL API (Q-learning): http://localhost:8001/docs")
     print("\nДля остановки серверов нажмите Ctrl+C")
     
-    # Обработка сигнала Ctrl+C для корректного завершения серверов
+    
     def signal_handler(sig, frame):
         print("\nОстановка серверов...")
         dp_process.terminate()
@@ -70,7 +70,7 @@ def start_servers():
     
     signal.signal(signal.SIGINT, signal_handler)
     
-    # Ожидаем завершения серверов
+    
     try:
         dp_process.wait()
         rl_process.wait()

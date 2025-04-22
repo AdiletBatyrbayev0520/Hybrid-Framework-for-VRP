@@ -5,7 +5,7 @@ import time
 import matplotlib.pyplot as plt
 import pandas as pd
 
-# URL-адреса наших API
+
 DP_API_URL = "http://localhost:8000/solve"
 RL_API_URL = "http://localhost:8001/solve"
 
@@ -19,12 +19,11 @@ def generate_test_matrix(n):
     Returns:
         Матрица расстояний
     """
-    # Генерируем случайные координаты городов
-    np.random.seed(42)  # Фиксируем seed для воспроизводимости
+
+    np.random.seed(42)  
     x = np.random.rand(n) * 100
     y = np.random.rand(n) * 100
     
-    # Создаем матрицу расстояний (евклидово расстояние)
     distance_matrix = np.zeros((n, n))
     for i in range(n):
         for j in range(n):
@@ -39,11 +38,11 @@ def test_dp_api():
     """
     print("\nТестирование DP API (Held-Karp):")
     
-    # Тест 1: Малая матрица (5 городов)
+    
     print("\nТест 1: Малая матрица (5 городов)")
     distance_matrix = generate_test_matrix(5)
     
-    # Отправляем запрос
+    
     start_time = time.time()
     response = requests.post(
         DP_API_URL,
@@ -51,7 +50,7 @@ def test_dp_api():
     )
     request_time = time.time() - start_time
     
-    # Проверяем ответ
+    
     if response.status_code == 200:
         result = response.json()
         print(f"Маршрут: {' -> '.join(result['route'])}")
@@ -62,11 +61,11 @@ def test_dp_api():
         print(f"Ошибка: {response.status_code}")
         print(response.json())
     
-    # Тест 2: Средняя матрица (10 городов)
+    
     print("\nТест 2: Средняя матрица (10 городов)")
     distance_matrix = generate_test_matrix(10)
     
-    # Отправляем запрос
+    
     start_time = time.time()
     response = requests.post(
         DP_API_URL,
@@ -74,7 +73,7 @@ def test_dp_api():
     )
     request_time = time.time() - start_time
     
-    # Проверяем ответ
+    
     if response.status_code == 200:
         result = response.json()
         print(f"Маршрут: {' -> '.join(result['route'])}")
@@ -85,11 +84,11 @@ def test_dp_api():
         print(f"Ошибка: {response.status_code}")
         print(response.json())
     
-    # Тест 3: Максимальная матрица (20 городов)
+    
     print("\nТест 3: Максимальная матрица (20 городов)")
     distance_matrix = generate_test_matrix(20)
     
-    # Отправляем запрос
+    
     start_time = time.time()
     response = requests.post(
         DP_API_URL,
@@ -97,7 +96,7 @@ def test_dp_api():
     )
     request_time = time.time() - start_time
     
-    # Проверяем ответ
+    
     if response.status_code == 200:
         result = response.json()
         print(f"Маршрут: {' -> '.join(result['route'][:3])} ... {' -> '.join(result['route'][-3:])}")
@@ -108,11 +107,11 @@ def test_dp_api():
         print(f"Ошибка: {response.status_code}")
         print(response.json())
     
-    # Тест 4: Слишком большая матрица (25 городов)
+    
     print("\nТест 4: Слишком большая матрица (25 городов)")
     distance_matrix = generate_test_matrix(25)
     
-    # Отправляем запрос
+    
     start_time = time.time()
     response = requests.post(
         DP_API_URL,
@@ -120,25 +119,25 @@ def test_dp_api():
     )
     request_time = time.time() - start_time
     
-    # Проверяем ответ (ожидаем ошибку)
+    
     if response.status_code != 200:
         print(f"Ожидаемая ошибка: {response.status_code}")
         print(response.json())
     else:
         print("Ошибка: API принял слишком большую матрицу!")
     
-    # Тест 5: Некорректная матрица (не квадратная)
+    
     print("\nТест 5: Некорректная матрица (не квадратная)")
     distance_matrix = generate_test_matrix(5)
-    distance_matrix = distance_matrix[:4]  # Удаляем одну строку
+    distance_matrix = distance_matrix[:4]  
     
-    # Отправляем запрос
+    
     response = requests.post(
         DP_API_URL,
         json={"distance_matrix": distance_matrix}
     )
     
-    # Проверяем ответ (ожидаем ошибку)
+    
     if response.status_code != 200:
         print(f"Ожидаемая ошибка: {response.status_code}")
         print(response.json())
@@ -151,11 +150,11 @@ def test_rl_api():
     """
     print("\nТестирование RL API:")
     
-    # Тест 1: Малая матрица (5 городов)
+    
     print("\nТест 1: Малая матрица (5 городов)")
     distance_matrix = generate_test_matrix(5)
     
-    # Отправляем запрос
+    
     start_time = time.time()
     response = requests.post(
         RL_API_URL,
@@ -167,7 +166,7 @@ def test_rl_api():
     )
     request_time = time.time() - start_time
     
-    # Проверяем ответ
+    
     if response.status_code == 200:
         result = response.json()
         print(f"Маршрут: {' -> '.join(result['route'])}")
@@ -178,11 +177,11 @@ def test_rl_api():
         print(f"Ошибка: {response.status_code}")
         print(response.json())
     
-    # Тест 2: Средняя матрица (10 городов)
+    
     print("\nТест 2: Средняя матрица (10 городов)")
     distance_matrix = generate_test_matrix(10)
     
-    # Отправляем запрос
+    
     start_time = time.time()
     response = requests.post(
         RL_API_URL,
@@ -194,7 +193,7 @@ def test_rl_api():
     )
     request_time = time.time() - start_time
     
-    # Проверяем ответ
+    
     if response.status_code == 200:
         result = response.json()
         print(f"Маршрут: {' -> '.join(result['route'])}")
@@ -205,11 +204,11 @@ def test_rl_api():
         print(f"Ошибка: {response.status_code}")
         print(response.json())
     
-    # Тест 3: Большая матрица (20 городов)
+    
     print("\nТест 3: Большая матрица (20 городов)")
     distance_matrix = generate_test_matrix(20)
     
-    # Отправляем запрос
+    
     start_time = time.time()
     response = requests.post(
         RL_API_URL,
@@ -221,7 +220,7 @@ def test_rl_api():
     )
     request_time = time.time() - start_time
     
-    # Проверяем ответ
+    
     if response.status_code == 200:
         result = response.json()
         print(f"Маршрут: {' -> '.join(result['route'][:3])} ... {' -> '.join(result['route'][-3:])}")
@@ -232,11 +231,11 @@ def test_rl_api():
         print(f"Ошибка: {response.status_code}")
         print(response.json())
     
-    # Тест 4: Некорректный start_city
+    
     print("\nТест 4: Некорректный start_city")
     distance_matrix = generate_test_matrix(5)
     
-    # Отправляем запрос
+    
     response = requests.post(
         RL_API_URL,
         json={
@@ -246,7 +245,7 @@ def test_rl_api():
         }
     )
     
-    # Проверяем ответ (ожидаем ошибку)
+    
     if response.status_code != 200:
         print(f"Ожидаемая ошибка: {response.status_code}")
         print(response.json())
@@ -259,7 +258,7 @@ def compare_algorithms():
     """
     print("\nСравнение алгоритмов DP и RL:")
     
-    # Тесты для разных размеров матриц
+    
     sizes = [5, 10, 15, 20]
     dp_times = []
     rl_times = []
@@ -270,7 +269,7 @@ def compare_algorithms():
         print(f"\nТестирование матрицы размером {size}x{size}")
         distance_matrix = generate_test_matrix(size)
         
-        # DP API
+        
         response_dp = requests.post(
             DP_API_URL,
             json={"distance_matrix": distance_matrix}
@@ -286,7 +285,7 @@ def compare_algorithms():
             dp_times.append(None)
             dp_distances.append(None)
         
-        # RL API
+        
         response_rl = requests.post(
             RL_API_URL,
             json={
@@ -306,7 +305,7 @@ def compare_algorithms():
             rl_times.append(None)
             rl_distances.append(None)
     
-    # Создаем таблицу сравнения
+    
     comparison_data = {
         'Размер': sizes,
         'DP Время (сек)': dp_times,
@@ -320,10 +319,10 @@ def compare_algorithms():
     print("\nСравнительная таблица:")
     print(df.to_string(index=False))
     
-    # Визуализация результатов
+    
     plt.figure(figsize=(12, 5))
     
-    # График времени выполнения
+    
     plt.subplot(1, 2, 1)
     plt.plot(sizes, dp_times, 'b-o', label='DP (Held-Karp)')
     plt.plot(sizes, rl_times, 'r-o', label='RL (Q-learning)')
@@ -333,7 +332,7 @@ def compare_algorithms():
     plt.grid(True, alpha=0.3)
     plt.legend()
     
-    # График длины маршрутов
+    
     plt.subplot(1, 2, 2)
     plt.plot(sizes, dp_distances, 'b-o', label='DP (Held-Karp)')
     plt.plot(sizes, rl_distances, 'r-o', label='RL (Q-learning)')
@@ -349,7 +348,7 @@ def compare_algorithms():
         print("\nГрафик сохранен в файл: comparison_results.png")
     except Exception as e:
         print(f"\nОшибка при сохранении графика: {e}")
-        # Попробуем сохранить в текущую директорию
+        
         import os
         current_dir = os.getcwd()
         plt.savefig(os.path.join(current_dir, 'comparison_results.png'))
@@ -359,7 +358,7 @@ def main():
     print("Тестирование API для решения задачи коммивояжера")
     
     try:
-        # Проверяем доступность DP API
+        
         requests.get("http://localhost:8000/docs")
         dp_available = True
     except:
@@ -367,7 +366,7 @@ def main():
         dp_available = False
     
     try:
-        # Проверяем доступность RL API
+        
         requests.get("http://localhost:8001/docs")
         rl_available = True
     except:
@@ -378,7 +377,7 @@ def main():
         print("Ни один из API не доступен. Запустите серверы и повторите попытку.")
         return
     
-    # Запуск тестов
+    
     if dp_available:
         test_dp_api()
     

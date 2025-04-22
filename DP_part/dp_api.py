@@ -4,13 +4,23 @@ import numpy as np
 import time
 from typing import List, Dict, Any
 import uvicorn
+from fastapi.middleware.cors import CORSMiddleware
 
-# Импортируем функцию для решения задачи коммивояжера
 from held_karp import held_karp
 
 app = FastAPI(title="TSP Held-Karp API",
              description="API для решения задачи коммивояжера с использованием алгоритма Хелда-Карпа")
+origins = [
+    "*",  
+]
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  
+    allow_credentials=True,
+    allow_methods=["*"],  
+    allow_headers=["*"],  
+)
 class DistanceMatrixRequest(BaseModel):
     """Модель запроса с матрицей расстояний"""
     distance_matrix: List[List[float]]
@@ -35,16 +45,16 @@ async def solve_tsp(request: DistanceMatrixRequest):
         Объект ответа с маршрутом и дополнительной информацией
     """
     try:
-        # Преобразуем матрицу расстояний в numpy array
+        
         distance_matrix = np.array(request.distance_matrix)
         
-        # Проверка корректности матрицы расстояний
+        
         if distance_matrix.shape[0] != distance_matrix.shape[1]:
             raise HTTPException(status_code=400, detail="Матрица расстояний должна быть квадратной")
         
         num_cities = distance_matrix.shape[0]
         
-        # Проверка на ограничение количества городов
+        
         MAX_CITIES = 21
         if num_cities > MAX_CITIES:
             raise HTTPException(
@@ -52,16 +62,16 @@ async def solve_tsp(request: DistanceMatrixRequest):
                 detail=f"Слишком много городов ({num_cities}). Максимально допустимое количество: {MAX_CITIES}"
             )
         
-        # Засекаем время начала выполнения
+        
         start_time = time.time()
         
-        # Решаем задачу с помощью алгоритма Хелда-Карпа
+        
         path, total_distance = held_karp(distance_matrix)
         
-        # Вычисляем время выполнения
+        
         execution_time = time.time() - start_time
         
-        # Формируем ответ
+        
         response = RouteResponse(
             route=[f"City_{i}" for i in path],
             total_distance=total_distance,
@@ -72,7 +82,7 @@ async def solve_tsp(request: DistanceMatrixRequest):
         return response
     
     except Exception as e:
-        # В случае непредвиденной ошибки возвращаем 500
+        
         raise HTTPException(status_code=500, detail=f"Ошибка при решении задачи: {str(e)}")
 
 if __name__ == "__main__":
