@@ -64,95 +64,101 @@ def held_karp(distance_matrix):
     
     # Базовый случай: путь из начального города в каждый другой город
     for i in range(1, n):
-        mask = (1 << i)
-        dp[(mask, i)] = distance_matrix[0][i]
-        parent[(mask, i)] = 0
+        dp[(1 << i, i)] = distance_matrix[0][i]
+        parent[(1 << i, i)] = 0  # Родитель - начальный город
     
     # Перебор всех возможных подмножеств городов
     for size in range(2, n):
         for subset in combinations(range(1, n), size):
-            mask = sum(1 << i for i in subset)
+            # Преобразуем подмножество в битовую маску
+            bits = 0
+            for bit in subset:
+                bits |= 1 << bit
             
+            # Рассчитываем стоимость для каждого последнего города
             for last in subset:
-                # Исключаем last из subset для поиска предыдущего города
-                prev_mask = mask ^ (1 << last)
+                prev = bits & ~(1 << last)  # Исключаем последний город
                 
-                # Находим минимальную стоимость пути
-                min_cost = float('inf')
-                prev_city = -1
+                # Инициализируем минимальную стоимость
+                dp[(bits, last)] = float('inf')
                 
-                for prev in subset:
-                    if prev != last:
-                        cost = dp.get((prev_mask, prev), float('inf')) + distance_matrix[prev][last]
-                        if cost < min_cost:
-                            min_cost = cost
-                            prev_city = prev
-                
-                if min_cost != float('inf'):
-                    dp[(mask, last)] = min_cost
-                    parent[(mask, last)] = prev_city
-        
-    # Проверяем, что город 9 не является начальным городом (0)
-
-    target_city = n-1    
-    # Находим оптимальный путь, заканчивающийся в target_city
-    final_mask = (1 << n) - 2  # Все города кроме начального
-    if target_city < n:
-        # Исключаем target_city из маски, так как это будет последний город
-        final_mask &= ~(1 << target_city)
+                # Рассматриваем все возможные предпоследние города
+                for j in subset:
+                    if j == last:
+                        continue
+                    
+                    # Проверяем, что предыдущее состояние существует
+                    if (prev, j) not in dp:
+                        continue
+                    
+                    # Рассчитываем стоимость пути
+                    val = dp[(prev, j)] + distance_matrix[j][last]
+                    
+                    # Обновляем, если найден лучший путь
+                    if val < dp[(bits, last)]:
+                        dp[(bits, last)] = val
+                        parent[(bits, last)] = j  # Сохраняем предка для восстановления пути
     
+    # Находим оптимальный цикл (возвращение в начальный город)
+    bits = (1 << n) - 2  # Все города кроме начального (0)
     min_cost = float('inf')
-    last_city = -1
+    last = -1
     
+    # Находим лучший последний город перед возвращением в начальный
     for i in range(1, n):
-        if i != target_city:  # Исключаем target_city из промежуточных городов
-            cost = dp.get((final_mask, i), float('inf')) + distance_matrix[i][target_city]
-            if cost < min_cost:
-                min_cost = cost
-                last_city = i
+        if (bits, i) in dp:  # Проверяем, что состояние существует
+            val = dp[(bits, i)] + distance_matrix[i][0]
+            if val < min_cost:
+                min_cost = val
+                last = i
     
-    # Проверяем, найдено ли решение
-    if min_cost == float('inf') or last_city == -1:
-        path = list(range(n-1))  # Просто посещаем города по порядку
-        if 0 not in path:
-            path.insert(0, 0)  # Начинаем с города 0
-        if target_city not in path:
-            path.append(target_city)  # Заканчиваем target_city (9)
+    # Если нет решения, возвращаем простой маршрут
+    if min_cost == float('inf') or last == -1:
+        path = list(range(n))  # Посещаем города по порядку
+        path.append(0)  # Возвращаемся в начало
         
-        # Рассчитываем длину пути
+        # Считаем длину простого пути
         total_distance = 0
         for i in range(len(path) - 1):
-            if distance_matrix[path[i]][path[i+1]] < float('inf'):
-                total_distance += distance_matrix[path[i]][path[i+1]]
-            else:
-                total_distance += 1000  # Штраф за отсутствующее ребро
-            
+            total_distance += distance_matrix[path[i]][path[i+1]]
+        
         return path, total_distance
     
-    # Восстанавливаем путь от начального города до предпоследнего
-    path = [0]  # Начинаем с города 0
-    current_mask = final_mask
-    current_city = last_city
+    # Восстановление пути
+    path = []
     
-    while current_city != 0 and current_city > 0:
-        path.append(current_city)
-        prev_city = parent.get((current_mask, current_city), 0)
-        current_mask ^= (1 << current_city)
-        current_city = prev_city
+    # Восстанавливаем путь из таблицы предков
+    cur = last
+    cur_bits = bits
     
-    # Добавляем целевой город (9) в конец пути
-    path.append(target_city)
+    # Добавляем города в обратном порядке
+    while cur != 0:
+        path.append(cur)
+        if (cur_bits, cur) not in parent:
+            # Если что-то пошло не так, используем простой путь
+            path = list(range(n))
+            path.append(0)
+            
+            # Считаем длину простого пути
+            total_distance = 0
+            for i in range(len(path) - 1):
+                total_distance += distance_matrix[path[i]][path[i+1]]
+            
+            return path, total_distance
+        
+        next_cur = parent[(cur_bits, cur)]
+        cur_bits = cur_bits & ~(1 << cur)
+        cur = next_cur
     
-    # Рассчитываем фактическую длину пути
+    # Добавляем начальный и конечный город
+    path.append(0)  # Добавляем начальный город
+    path.reverse()  # Переворачиваем путь
+    path.append(0)  # Добавляем конечный город (возвращаемся в начало)
+    
+    # Считаем длину найденного пути
     total_distance = 0
     for i in range(len(path) - 1):
-        from_city = path[i]
-        to_city = path[i+1]
-        distance = distance_matrix[from_city][to_city]
-        if distance < float('inf'):
-            total_distance += distance
-        else:
-            total_distance += 1000  # Штраф
+        total_distance += distance_matrix[path[i]][path[i+1]]
     
     return path, total_distance
 
