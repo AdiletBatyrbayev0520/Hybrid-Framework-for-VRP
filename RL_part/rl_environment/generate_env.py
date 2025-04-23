@@ -5,9 +5,9 @@ import os
 
 
 def generate_cities(num_cities=10):
-    latitude = np.random.rand(num_cities, 1) * 90  
-    longitude = np.random.rand(num_cities, 1) * 180  
-    cities = np.concatenate([latitude, longitude], axis=1)
+    latitudes = np.random.rand(num_cities, 1) * 90  
+    longitudes = np.random.rand(num_cities, 1) * 180  
+    cities = np.concatenate([latitudes, longitudes], axis=1)
     return cities
 
 def calculate_distance(city1, city2):
