@@ -1,100 +1,117 @@
-Traveling Salesman Problem (TSP) with Double Q-learning
+# Компонент обучения с подкреплением (RL)
 
-This project implements the Traveling Salesman Problem (TSP) solution using Double Q-learning. The agent learns to visit all cities in a given graph and returns to the starting city, with the goal of minimizing the total travel distance.
+Данный компонент реализует решение задачи коммивояжера (TSP) с использованием метода обучения с подкреплением, а именно алгоритма Double Q-learning.
 
-Features
-	•	Double Q-learning: Uses two Q-tables to reduce overestimation bias in action-value estimates.
-	•	Exploration vs. Exploitation: Uses ε-greedy strategy for balancing exploration of new cities and exploitation of learned paths.
-	•	City Visits: Ensures all cities are visited exactly once before returning to the starting city.
-	•	Logging and Visualization: Logs the learning process, action selections, Q-value updates, and the best route.
+## Структура директории
 
-Files
-	•	double_q_learning.py: Main script to run the Double Q-learning algorithm on the TSP.
-	•	generate_tsp_data.py: Generates random city coordinates and distance matrices, saved as CSV files.
-	•	cities.csv: CSV file containing the coordinates of the cities.
-	•	distances.csv: CSV file containing the pairwise distances between the cities.
-	•	best_route.txt: File containing the best route found by the algorithm.
-	•	q1_weights.txt & q2_weights.txt: Files containing the learned Q-values for the two Q-tables.
+```
+RL_part/
+├── rl_environment/          # Модули для работы со средой
+│   └── generate_env.py      # Скрипт для генерации тестовой среды
+├── double_q_learning.py     # Основная реализация алгоритма Double Q-learning
+├── predict_route.py         # Модуль для прогнозирования маршрута с обученными весами
+├── rl_api.py                # API для работы с алгоритмом через REST
+├── runs/                    # Директория для хранения результатов обучения
+│   └── test_3/              # Пример сохраненного обучения (используется по умолчанию)
+│       ├── q1_weights.txt   # Веса первой Q-таблицы
+│       ├── q2_weights.txt   # Веса второй Q-таблицы
+│       └── best_route.txt   # Лучший найденный маршрут
+└── tests/                   # Тестовые данные
+    └── test_*/              # Поддиректории с тестовыми сценариями
+        ├── cities.csv       # Координаты городов
+        ├── distances.csv    # Матрица расстояний между городами
+        ├── best_route.txt   # Лучший найденный маршрут при обучении
+        └── predicted_route.txt  # Прогнозируемый маршрут
+```
 
-Requirements
-	•	Python 3.x
-	•	numpy
-	•	pandas
+## Алгоритм Double Q-learning
 
-You can install the necessary dependencies using pip:
+Double Q-learning — это улучшенная версия алгоритма Q-learning для обучения с подкреплением, которая использует две независимые Q-таблицы для уменьшения переоценки значений Q-функции.
 
-pip install numpy pandas
+### Основные характеристики:
+- **Временная сложность обучения**: O(k·n²), где k - количество эпизодов, n - количество городов
+- **Пространственная сложность**: O(n²)
+- **Точность**: Не гарантирует оптимальное решение, но часто находит близкие к оптимальным решения
+- **Масштабируемость**: Может работать с большим количеством городов (>20), в отличие от точных алгоритмов
 
-How to Use
+## Использование компонента
 
-1. Generating TSP Data
+### Обучение модели
 
-Before running the Double Q-learning algorithm, generate the cities and their distances using the generate_tsp_data.py script. This script creates the required cities.csv and distances.csv files.
+```bash
+python RL_part/double_q_learning.py --save_path path/to/save/model --num_episodes 1000 --alpha 0.1 --gamma 0.9 --epsilon 0.1
+```
 
-python generate_tsp_data.py <num_cities> <save_path>
+Параметры:
+- `--save_path`: путь для сохранения модели и результатов (должен содержать cities.csv и distances.csv)
+- `--weights_path`: (опционально) путь к существующим весам для продолжения обучения
+- `--num_episodes`: количество эпизодов обучения (по умолчанию 1000)
+- `--alpha`: скорость обучения (по умолчанию 0.1)
+- `--gamma`: коэффициент дисконтирования (по умолчанию 0.9)
+- `--epsilon`: вероятность случайного действия (по умолчанию 0.1)
 
-	•	num_cities: Number of cities for the TSP (e.g., 10).
-	•	save_path: Directory where the CSV files will be saved.
+### Прогнозирование маршрута
 
-Example:
+```bash
+python RL_part/predict_route.py --weights_path path/to/model --input_path path/to/data --save_path path/to/save/results
+```
 
-python generate_tsp_data.py 10 /path/to/save
+Параметры:
+- `--weights_path`: путь к обученным весам (директория с q1_weights.txt и q2_weights.txt)
+- `--input_path`: путь к данным (директория с cities.csv и distances.csv)
+- `--save_path`: путь для сохранения результатов
+- `--csv`: флаг, указывающий на использование CSV-файлов (по умолчанию True)
 
-This will generate two files:
-	•	cities.csv: Contains the coordinates of the cities.
-	•	distances.csv: Contains the pairwise distances between cities.
+### Запуск API-сервера
 
-2. Running Double Q-learning
+```bash
+python RL_part/rl_api.py
+```
 
-Once the data is generated, you can run the Double Q-learning algorithm to solve the TSP. The double_q_learning.py script will learn the best route based on the generated data.
+API-сервер запускается на порту 8001 и предоставляет REST API для решения задачи коммивояжера методом обучения с подкреплением.
 
-python double_q_learning.py <save_path> <num_episodes> <alpha> <gamma>
+#### Пример запроса к API:
 
-	•	save_path: Directory where the data and results will be saved (the same path used in step 1).
-	•	num_episodes: Number of training episodes (default: 1000).
-	•	alpha: Learning rate (default: 0.1).
-	•	gamma: Discount factor (default: 0.9).
+```bash
+curl -X POST http://localhost:8001/solve \
+  -H "Content-Type: application/json" \
+  -d '{"distance_matrix": [[0, 10, 15, 20], [10, 0, 35, 25], [15, 35, 0, 30], [20, 25, 30, 0]]}'
+```
 
-Example:
+Также можно указать путь к весам в запросе:
 
-python double_q_learning.py /path/to/save 1000 0.1 0.9
+```bash
+curl -X POST http://localhost:8001/solve \
+  -H "Content-Type: application/json" \
+  -d '{"distance_matrix": [[0, 10, 15, 20], [10, 0, 35, 25], [15, 35, 0, 30], [20, 25, 30, 0]], "weights_path": "runs/test_3"}'
+```
 
-This will:
-	•	Train the agent using Double Q-learning to find the shortest route.
-	•	Save the best route in best_route.txt.
-	•	Save the learned Q-values in q1_weights.txt and q2_weights.txt.
-	•	Log the learning process in tsp_q_learning.log.
+## Генерация тестовых данных
 
-3. Output
-	•	best_route.txt: Contains the best route found by the algorithm.
-	•	q1_weights.txt: The learned Q-table for the first Q-value function.
-	•	q2_weights.txt: The learned Q-table for the second Q-value function.
-	•	tsp_q_learning.log: Log file with detailed information on the learning process, including action selections, updates, and episode rewards.
+Для создания новых тестовых наборов данных используйте скрипт generate_env.py:
 
-Example Output in best_route.txt:
+```bash
+python RL_part/rl_environment/generate_env.py --num_cities 15 --save_path RL_part/tests/test_new
+```
 
-Best Route:
-City_0 -> City_5 -> City_3 -> City_7 -> City_1 -> City_4 -> City_9 -> City_8 -> City_2 -> City_6 -> City_0
+Параметры:
+- `--num_cities`: количество городов в тестовом наборе
+- `--save_path`: путь для сохранения сгенерированных файлов
 
-This route represents the shortest path that visits all cities exactly once and returns to the starting city (City_0).
+## Особенности и преимущества
 
-Hyperparameters
-	•	num_episodes: The number of episodes the agent will train for. A higher number of episodes will allow the agent to learn better but will take longer to compute.
-	•	alpha: The learning rate, which determines how much the agent updates the Q-values. A small value means slow learning, while a larger value means faster learning.
-	•	gamma: The discount factor, which determines the importance of future rewards. A higher value means the agent will focus more on future rewards.
+1. **Масштабируемость**: Метод может работать с большим количеством городов, когда точные алгоритмы становятся непрактичными.
 
-Logging
+2. **Время выполнения**: После обучения, прогнозирование маршрута выполняется очень быстро (почти мгновенно).
 
-The training process is logged in tsp_q_learning.log. It contains:
-	•	Episode information.
-	•	Total reward achieved in each episode.
-	•	Q-table updates during learning.
-	•	Best route found by the agent.
+3. **Компромисс качества**: Находит приближенные решения, которые обычно на 10-25% хуже оптимальных, но работает со значительно большими задачами.
 
-Conclusion
+4. **Обучение переносится**: Обученные веса могут использоваться для решения новых задач с тем же количеством городов.
 
-This project provides a solution to the Traveling Salesman Problem using Double Q-learning. By exploring the balance between exploration and exploitation, the agent learns to find an optimal route that visits all cities and returns to the start.
+## Зависимости
 
-For further improvements, consider tuning the hyperparameters or implementing other reinforcement learning algorithms like DQN (Deep Q-Network) for more complex environments.
-
-Feel free to modify or extend the project as needed! If you have any questions or issues, please feel free to ask for help.
+- numpy
+- pandas
+- matplotlib (для визуализации)
+- fastapi (для API)
+- uvicorn (для запуска API-сервера)
