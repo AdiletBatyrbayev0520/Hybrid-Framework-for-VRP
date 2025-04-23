@@ -2,16 +2,48 @@ import numpy as np
 import pandas as pd
 import argparse
 import os
+import math
 
 
 def generate_cities(num_cities=10):
-    latitudes = np.random.rand(num_cities, 1) * 90  
-    longitudes = np.random.rand(num_cities, 1) * 180  
+    
+    latitudes = np.random.uniform(-90, 90, (num_cities, 1))
+    
+    longitudes = np.random.uniform(-180, 180, (num_cities, 1))
+    
     cities = np.concatenate([latitudes, longitudes], axis=1)
     return cities
 
+
 def calculate_distance(city1, city2):
-    return np.sqrt((city1[0] - city2[0]) ** 2 + (city1[1] - city2[1]) ** 2)
+    """
+    Расчет расстояния между двумя точками на поверхности Земли,
+    используя формулу гаверсинуса (расстояние по большой окружности)
+    
+    city1, city2: координаты в формате [latitude, longitude] в градусах
+    возвращает: расстояние в километрах
+    """
+    
+    R = 6371.0
+    
+    
+    lat1 = math.radians(city1[0])
+    lon1 = math.radians(city1[1])
+    lat2 = math.radians(city2[0])
+    lon2 = math.radians(city2[1])
+    
+    
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    
+    
+    a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    
+    
+    distance = R * c
+    
+    return distance
 
 
 def main():
@@ -24,6 +56,10 @@ def main():
     num_cities = args.num_cities
     save_path = args.save_path
 
+    # Создаем директорию для сохранения, если она не существует
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+        print(f"Created directory: {save_path}")
     
     cities = generate_cities(num_cities)
     distance_matrix = np.zeros((num_cities, num_cities))
@@ -35,7 +71,7 @@ def main():
             distance_matrix[i][j] = distance_matrix[j][i] = distance
 
     
-    cities_df = pd.DataFrame(cities, columns=["x", "y"], index=[f"City_{i}" for i in range(num_cities)])
+    cities_df = pd.DataFrame(cities, columns=["latitude", "longitude"], index=[f"City_{i}" for i in range(num_cities)])
     cities_df.to_csv(os.path.join(save_path, "cities.csv"))
 
     
