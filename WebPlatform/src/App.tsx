@@ -9,8 +9,8 @@ import Papa from "papaparse";
 let id = 1;
 const AVERAGE_SPEED_KMH = 15;
 // const DP_API_URL = "http://192.168.0.163:8000/solve";
-const DP_API_URL = "http://localhost:8000/solve";
-const RL_API_URL = "http://localhost:8001/solve";
+const DP_API_URL = "http://localhost:8001/solve";
+const RL_API_URL = "http://localhost:8002/solve";
 
 const App: React.FC = () => {
     const [coordinates, setCoordinates] = useState<Coordinate[]>([]);
