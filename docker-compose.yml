@@ -1,0 +1,35 @@
+services:
+  web:
+    image: web_platform
+    container_name: web_platform
+    build:
+      context: WebPlatform
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    networks:
+      - tsp_network
+  dp_part:
+    image: dp_part
+    container_name: dp_part
+    build:
+      context: DP_part
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    networks:
+      - tsp_network
+  rl_part:
+    image: rl_part
+    container_name: rl_part
+    build:
+      context: RL_part
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    networks:
+      - tsp_network
+
+networks:
+  tsp_network:
+    driver: bridge
